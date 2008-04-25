@@ -424,7 +424,7 @@ def pdbSatk(pdb_file,wij_file=None,keep_temp=False):
     if not keep_temp:
         cleanUp(prefix)
 
-    grabSaltTitration(prefix)
+    createPrettyOutput(prefix)
 
 
 def main():

@@ -8,14 +8,13 @@ __description__ = \
 """
 pdb_residue-renumber.py
 
-Takes a pdb file and renumbers all chains starting from 1.  Prints renumbered
-file to stdout.  If an output file is specified, the conversion from original
-numbering to new numbering will be placed in this file.
+Takes a pdb file and renumbers all chains so that there are no gaps in 
+numbering.  Written to pdb_res-renum.pdb.  If an alignment file is requested,
+the alignment is written out to a separate file.
 """
 
 __author__ = "Michael J. Harms"
 __date__ = "070529"
-__usage__ = "pdb_residue.py pdb_file [alignment_file]"
 
 import os, sys
 

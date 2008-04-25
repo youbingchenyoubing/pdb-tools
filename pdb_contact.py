@@ -83,10 +83,11 @@ def main():
         dist = pdbContact(pdb,options.all)
 
         # Make sure the difference and main pdbs have the same number of atoms
-        if len(dist) != len(to_compare):
-            print "\"%s\" and \"%s\" do not have same number of atoms!" % \
-                  (pdb_file,options.difference)
-            sys.exit()
+        if options.difference != None:
+            if len(dist) != len(to_compare):
+                print "\"%s\" and \"%s\" do not have same number of atoms!" % \
+                    (pdb_file,options.difference)
+                sys.exit()
 
         # Write output
         out = []
@@ -102,7 +103,7 @@ def main():
             for j in range(len(dist)):
                 out.append("%10i%10i%10.3F" % (i,j,dist[i][j]))
 
-                if options.difference:
+                if options.difference != None:
                     d = dist[i][j] - to_compare[i][j]
                     mean = (dist[i][j] + to_compare[i][j])/2.
                     if mean != 0:

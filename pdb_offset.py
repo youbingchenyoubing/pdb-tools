@@ -13,7 +13,6 @@ Adds an offset to the residue numbers of a pdb without touching anything else.
 
 __author__ = "Michael J. Harms"
 __date__ = "070131"
-__usage__ = "pdb_offset.py pdb_file OR pdb_dir offset"
 
 
 import os, sys

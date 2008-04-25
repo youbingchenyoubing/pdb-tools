@@ -105,7 +105,7 @@ def main():
         atom = options.atom
     except ValueError:
         err = "Mangled arguments!"
-        cmdline.parser.err(err)
+        cmdline.parser.error(err)
 
     # Run script for all files in file_list
     for pdb_file in file_list:

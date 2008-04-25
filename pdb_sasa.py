@@ -87,7 +87,7 @@ def readStandards(standard_dir=None,probe_radius=1.4,z_sample=0.05,
     standards = {}
     standard_list = [f for f in os.listdir('.') if f[-4:] == ".pdb"]
     for pdb in standard_list:
-        
+       
         residue_standard = runNaccess(pdb,probe_radius,z_sample,vdw_file)
         residue_standard = [l for l in residue_standard if l[10:13] == "  3"]
 
@@ -120,6 +120,7 @@ def pdbSASA(pdb_file,probe_radius=1.4,z_sample=0.05,vdw_file=None,
             print "accessibility will be calculated."
             standards = {}
 
+    print pdb_file
     all_atoms = runNaccess(pdb_file,probe_radius,z_sample,vdw_file,keep_temp)
 
     residues = []

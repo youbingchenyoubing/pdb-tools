@@ -182,7 +182,7 @@ def backboneCheck(coord):
     return coord, removed
 
 
-def addMissingAtoms(coord,seqres,keep_temp):
+def addMissingAtoms(coord,seqres,keep_temp=False):
     
     # Grab the b-factor and occupancy columns
     bfact_occ = dict([(l[13:26],l[54:67]) for l in coord])

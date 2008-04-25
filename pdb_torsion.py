@@ -11,7 +11,6 @@ Determines the dihedral angles (phi,psi) for each residue in a protein.
 
 __author__ = "Michael J. Harms"
 __date__ = "070601"
-__usage__ = "pdb_torsion.py pdb_file"
 
 import os, sys
 from helper import cmdline, geometry

@@ -9,7 +9,7 @@ __description__ = \
 pdb_disulfide.py
 
 Returns a list of cys in disulfide bonds in a protein using a simple distance
-constraint.
+constraint.  
 """
 
 __author__ = "Michael J. Harms"

@@ -13,7 +13,6 @@ First tries to read SEQRES entries; if this fails, uses pdb coordinates.
 """
 __author__ = "Michael J. Harms"
 __date__ = "080123"
-__usage__ = "pdb_seq.py"
 
 import os
 from pdb_data.common import *

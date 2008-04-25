@@ -14,7 +14,6 @@ atom is added for GLY residues.
 
 __author__ = "Michael J. Harms"
 __date__ = "070521"
-__usage__ = "num_neighbors.py pdb_file distance_cutoff sequence_cutoff"
 
 
 import os, sys
@@ -81,7 +80,7 @@ def pdbNeighbors(pdb,distance_cutoff=10,sequence_cutoff=4,residue=None,
                   for i in range(num_compare)]
     for i in range(num_compare):
         for j in range(num_cb):
-            dist_array[i][j] = geometry.dist(compare_coord,cb_coord)
+            dist_array[i][j] = geometry.dist(compare_coord[i],cb_coord[j])
 
     # Count number of neighbors within distance_cutoff angstroms
     # for each position
