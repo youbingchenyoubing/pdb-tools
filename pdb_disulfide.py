@@ -16,12 +16,16 @@ __author__ = "Michael J. Harms"
 __date__ = "070726"
 
 import sys
+from pdb_clean import stripACS
+
 
 def pdbDisulfide(pdb,disulfide_cutoff=4.0):
     """
     Finds all disulfides in pdb file based on disulfide cutoff distance (A).
     """
 
+    pdb, skipped = stripACS(pdb)
+    
     # Grab sg_atoms, coordinates, and residue numbers
     sg_atoms = [l for l in pdb if l[0:6] == "ATOM  " and l[13:16] == "SG "]
     coord = [[float(sg[30+8*i:38+8*i]) for i in range(3)] for sg in sg_atoms]
@@ -87,11 +91,10 @@ def main():
 
         free_cys, disulfide_bonds = pdbDisulfide(pdb,options.cutoff)
 
-        out = ["<<%s>>\nFree Cys:   " % pdb_file]
-        out.extend(["%s," % c.strip() for c in free_cys])
-        out.append("\nDisulfide Bonds:")
-        out.extend(["%s-%s, " % (d[0].strip(),d[1].strip())
-                    for d in disulfide_bonds])
+        out = ["<<%s>>\nFree Cys:        " % pdb_file]
+        out.extend(["%s, " % c.strip() for c in free_cys])
+        out.append("\nDisulfide Bonds: ")
+        out.extend(["%s, " % d.strip() for d in disulfide_bonds])
 
         print "".join(out)
 

@@ -174,7 +174,8 @@ def processTerm(pdb):
     return pdb
 
 
-def pdbAddH(pdb,pdb_id,his_types=None,calc_type="single",keep_temp=False):
+def pdbAddH(pdb,pdb_id,uhbd_style=False,his_types=None,calc_type="single",
+            keep_temp=False):
     """
     Add polar hydrogens to the structure using CHARMM for a UHBD calculation.
     """
@@ -238,22 +239,35 @@ def pdbAddH(pdb,pdb_id,his_types=None,calc_type="single",keep_temp=False):
     out_pdb = convertResidues(out_pdb,resid_conv=charmm2pdb_resid,
                               atom_skip=charmm2pdb_atom_skip)
     out_pdb = processTerm(out_pdb)
-    
-    # UHBD takes a non-standard pdb file; atom names must be left-justified.
-    out_pdb = ["%s%-4s%s" % (l[:12],l[12:16].strip(),l[16:]) for l in out_pdb]
-    
-    # UHDB also cannot handle chain identifiers, remove them
-    out_pdb = ["%s %s" % (l[0:21],l[22:]) for l in out_pdb]
 
-    # Renumber all atoms from one
-    out_pdb = pdbAtomRenumber(out_pdb)
+    new_pdb = container.Structure("tmp",[],out_pdb)
+    new_pdb.loadNumberConversion("%s_resid-conversion.txt" % pdb_id,"fixed")
+    new_pdb.renumberAtoms()
+
+    out = []
+    for chain in new_pdb.chains:
+        out.extend(chain.atom_lines)
+        
+        ter = out[-1]
+        ter = "%s%s%54s\n" % ("TER   ",ter[6:26]," ")
+        out.append(ter)
     
+    out.append("%-80s\n" % "END")
+
+    if uhbd_style:
+        out = [l for l in out if l[0:3] != "TER"] 
+
+        # UHBD takes a non-standard pdb file; atom names must be left-justified.
+        out = ["%s%-4s%s" % (l[:12],l[12:16].strip(),l[16:]) for l in out]
+    
+        # UHDB also cannot handle chain identifiers, remove them
+        out = ["%s %s" % (l[0:21],l[22:]) for l in out]
+
     # Add header and END
-    out_pdb.insert(0,"%-79s\n" % "REMARK  Polar hydrogens added by pdb_addH.py")
-    out_pdb.insert(1,"%-79s\n" % ("REMARK  Time: %s" % time.asctime()))
-    out_pdb.append("END")
+    out.insert(0,"%-79s\n" % "REMARK  Polar hydrogens added by pdb_addH.py")
+    out.insert(1,"%-79s\n" % ("REMARK  Time: %s" % time.asctime()))
     
-    return out_pdb
+    return out
 
 
 def main():
@@ -264,21 +278,26 @@ def main():
     # Parse command line
     cmdline.initializeParser(__description__,__date__)
     cmdline.addOption(short_flag="t",
-                          long_flag="his_tautomers",
-                          action="store",
-                          default=None,
-                          help="File containing his tautomers to use",
-                          nargs=1)
+                      long_flag="his_tautomers",
+                      action="store",
+                      default=None,
+                      help="File containing his tautomers to use",
+                      nargs=1)
     cmdline.addOption(short_flag="k",
-                          long_flag="keep_temp",
-                          action="store_true",
-                          default=False,
-                          help="Keep temporary files")
+                      long_flag="keep_temp",
+                      action="store_true",
+                      default=False,
+                      help="Keep temporary files")
     cmdline.addOption(short_flag="f",
-                          long_flag="full",
-                          action="store_true",
-                          default=False,
-                          help="Add hydrogens for UHBD full calculation")
+                      long_flag="full",
+                      action="store_true",
+                      default=False,
+                      help="Add hydrogens for UHBD full calculation")
+    cmdline.addOption(short_flag="u",
+                      long_flag="uhbd_style",
+                      action="store_true",
+                      default=False,
+                      help="Write out in non-standard uhbd format")
     cmdline.addOption(short_flag="s",
                       long_flag="skip",
                       action="store_true",
@@ -306,8 +325,9 @@ def main():
     else:
         his_types = None
 
-    # Decide whether to keep temp files
+    # Decide whether to keep temp files and how to format output
     keep_temp = options.keep_temp
+    uhbd_style = options.uhbd_style
 
     # Decide whether to add "full" hydrogens.
     if options.full:
@@ -332,7 +352,8 @@ def main():
         
         # Add hydrogens
         try:
-            pdb_out = pdbAddH(pdb,pdb_id,his_types=his_types,
+            pdb_out = pdbAddH(pdb,pdb_id,uhbd_style=uhbd_style,
+                              his_types=his_types,
                               keep_temp=keep_temp,
                               calc_type=calc_type)
         except PdbAddHError, (strerror):
