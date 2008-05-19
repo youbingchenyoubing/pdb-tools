@@ -146,10 +146,6 @@ def addHydrogens():
     out.append("! Build missing atoms\n")
     out.append("ic purge\nic param\nic fill preserve\nic build\n\n")
 
-    # Define atoms that should be fixed during minimization
-    out.append("! Fix all atoms that were not added by CHARMM\n")
-    out.append("define fixed sele ( .not. type H* ) .and. ( init ) end\n\n")
-
     # Build hydrogens on this chain
     out.append("! Build hydrogens\n")
     out.append("define test sele ( .not. type H* ) .and. ")
@@ -158,6 +154,10 @@ def addHydrogens():
     out.append("hbuild sele type H* end\n")
     out.append("define test sele .not. init show end\n\n")
 
+    # Define atoms that should be fixed during minimization
+    out.append("! Fix all atoms that were not added by CHARMM\n")
+    out.append("define fixed sele ( .not. type H* ) .and. ( init ) end\n\n")
+    
     return "".join(out)
 
 
@@ -191,7 +191,8 @@ def minimizeFull(steps):
     out.append("! Minimize non-fixed atoms with %s steps.\n\n" % steps)
 
     # Create output.
-    out.append("cons fix sele fixed end\n")
+    #out.append("cons fix sele fixed end\n")
+    out.append("cons fix sele .not. type H* end\n")
     out.append("mini sd -\n")
     out.append("nste %i npri %i tolg %.3F step %.3F tols % 0.3F -\n" %
                (steps,m["NPRI"],m["TOLG"],m["STEP"],m["TOLS"]))

@@ -44,7 +44,7 @@ def convertHis(pdb,his_types=None):
     
     # Find histidines
     all_his = ["HIS ","HSD ","HSE ","HISA","HISB"]
-    his_dict = {1:"HSD ",2:"HIS "}
+    his_dict = {1:"HSD ",2:"HIS ",3:"HSC "}
     
     # Change his types
     HIS_lines = [l for l in pdb if l[17:21] in all_his and l[13:16] == "N  "]
@@ -173,6 +173,24 @@ def processTerm(pdb):
 
     return pdb
 
+def flipAtoms(pdb):
+    """
+    Flip the OX1/OX2 labels of GLU and ASP residues.
+    """
+   
+    flip = {"ASP":("OD1","OD2"),
+            "GLU":("OE1","OE2")}
+    flip_keys = flip.keys()
+
+    for index, line in enumerate(pdb):
+        res = line[17:30]
+        if res in flip_keys and line[13:16] in flip[res]:
+            new_atom = flip[res].index(line[13:16]) - 1
+            pdb[index] = "%s%s%s" % (line[0:13],new_atom,line[16:])
+
+    return pdb
+ 
+
 
 def pdbAddH(pdb,pdb_id,uhbd_style=False,his_types=None,calc_type="single",
             keep_temp=False):
@@ -181,13 +199,22 @@ def pdbAddH(pdb,pdb_id,uhbd_style=False,his_types=None,calc_type="single",
     """
     
     # Residues to alter and skip during processing
-    pdb2charmm_resid = {"LYS ":"LYSN","ARG ":"ARGN","GLU ":"GLUH","ASP ":"ASPH",
-                        "LYSH":"LYSN"}
-    charmm2pdb_resid = {"LYSN":"LYS ","ARGN":"ARG ","GLUH":"GLU ","ASPH":"ASP ",
-                        "HIS ":"HISA","HSD ":"HISB"}
+    if calc_type == "single":
+        pdb2charmm_resid = {"LYS ":"LYSN","ARG ":"ARGN","GLU ":"GLUH",
+                            "ASP ":"ASPH","LYSH":"LYSN"}
+        charmm2pdb_resid = {"LYSN":"LYS ","ARGN":"ARG ","GLUH":"GLU ",
+                            "ASPH":"ASP ","HIS ":"HISA","HSD ":"HISB"}
+    elif calc_type == "full":
+        pdb2charmm_resid = {"GLU ":"GLUH","ASP ":"ASPH","LYSH":"LYS "}
+        charmm2pdb_resid = {"GLUH":"GLU ","ASPH":"ASP ","HIS ":"HISA",
+                            "HSD ":"HISB","HSC ":"HISA"}
+    else:
+        err = "Calculation type \"%s\" not recognized!" % calc_type
+        raise PdbAddHError(err)        
+ 
     charmm2pdb_atom_skip = [" HT3"]
     all_his = ["HIS ","HSD ","HSE ","HISA","HISB"]
-    
+
     # Grab sequence and atoms from pdb file
     seq_lines = [l for l in pdb if l[0:6] == "SEQRES"]
     atom_lines = [l for l in pdb if l[0:6] == "ATOM  "]    
@@ -204,27 +231,42 @@ def pdbAddH(pdb,pdb_id,uhbd_style=False,his_types=None,calc_type="single",
         tmp_struct = convertResidues(struct[0],resid_conv=pdb2charmm_resid)
         structure_list[index][0] = tmp_struct
     
-    # Convert histidines to correct type
-    his_list = his_types
-    err = "Number of HIS in pdb and his tautomer file do not match!"
-    for index, struct in enumerate(structure_list):
-        if his_types != None:
-            num_his = len([l for l in tmp_struct if l[17:21] in all_his]) 
-            try:
-                his = his_list[:num_his]
-                his_list = his_list[num_his:]
-            except IndexError:
-                raise cmdline.parser.error(err)
-        else:
-            his = None
+    # Convert histidines to correct type (speificied in tautomer file).  If 
+    # not tautomer file is specified, default HIS is passed to charmm
+    if calc_type == "single":
+        his_list = his_types
+        for index, struct in enumerate(structure_list):
+            if his_types != None:
+                num_his = len([l for l in struct[0] if l[17:21] in all_his]) 
+                try:
+                    his = his_list[:num_his]
+                    his_list = his_list[num_his:]
+                except IndexError:
+                    err = "Number of HIS in pdb and tautomer file do not match!"
+                    raise cmdline.parser.error(err)
+            else:
+                his = None
             
-        tmp_struct = convertHis(struct[0][:],his)
-        structure_list[index][0] = tmp_struct
+            tmp_struct = convertHis(struct[0][:],his)
+            structure_list[index][0] = tmp_struct
+
+        # Make sure that all his where used
+        if his_types != None and len(his_list) != 0:
+            raise cmdline.parser.error(err)
+
+    # For full calculation, convert all histidines to charged form (HSC)
+    elif calc_type == "full":
+        for index, struct in enumerate(structure_list):
+            num_his = len([l for l in struct[0] if l[17:21] in all_his]) 
+            his = [3 for i in range(num_his)]
+            tmp_struct = convertHis(struct[0][:],his)
+            structure_list[index][0] = tmp_struct
     
-    # Make sure that all his where used
-    if his_types != None and len(his_list) != 0:
-        raise cmdline.parser.error(err)
-    
+    # Flip carboxyl atoms 
+    if calc_type == "full":
+        for index, struct in enumerate(structure_list):
+            structure_list[index][0] = flipAtoms(struct[0])
+ 
     # User CHARMM to add hydrogens
     try:
         out_pdb = charmm.interface.charmmWash(structure_list,calc_type,
