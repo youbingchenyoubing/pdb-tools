@@ -8,6 +8,11 @@ Some scripts require installation of third-party programs.  These should be inst
 
 = Usage =
 
-All programs in the pdb-tools suite use the same command line parser.  This parser can take an arbitrarily long list of any combination of arguments of the following types: pdb files, directories of pdb files, four-character pdb ids, or text files containing whitespace delimited (i.e. space, tab, carriage return) lists of any combination of the allowed types of arguments.  If the list of arguments contains pdb files or ids that do not exist locally, the parser will attempt to download the files from the RCSB database.  
+All programs in the pdb-tools suite use the same command line parser.  This parser can take an arbitrarily long list of any combination of arguments of the following types:
+  * pdb files
+  * directories of pdb files
+  * four-character pdb ids
+  * text files containing whitespace delimited (i.e. space, tab, carriage return) lists of any combination of the other allowed types of arguments.
+If the list of arguments contains pdb files or ids that do not exist locally, the parser will attempt to download the files from the RCSB database.  
 
 Although the arguments to each program are identical, the options are quite different depending on the program requirements.  The best way to learn how to use a particular program is to type pdb_XXXX.py --help.  This will spit out a list of available options.  In most cases, the options are actually optional: the program will use a sane default if none is specified.  In some cases (notably pdb_mutator.py), options must be specified for the program to run.  
