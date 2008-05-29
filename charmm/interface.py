@@ -99,7 +99,8 @@ def charmm2pdb(charmm_output):
     return pdb
 
 
-def charmmWash(input_structures,calc_type="single",keep_temp=False):
+def charmmWash(input_structures,calc_type="single",keep_temp=False,
+               hbond=None):
     """
     Wash a structure through CHARMM, adding polar hydrogens and missing heavy
     atoms.
@@ -136,7 +137,7 @@ def charmmWash(input_structures,calc_type="single",keep_temp=False):
         raise CharmmInterfaceError(err)
  
     # Create CHARMM
-    input = gen_input.createCharmmFile(struct_input,calc_type)
+    input = gen_input.createCharmmFile(struct_input,calc_type,hbond)
     
     # Run CHARMM
     charmm_out = runCharmm(input)

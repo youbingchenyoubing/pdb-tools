@@ -193,7 +193,7 @@ def flipAtoms(pdb):
 
 
 def pdbAddH(pdb,pdb_id,uhbd_style=False,his_types=None,calc_type="single",
-            keep_temp=False):
+            keep_temp=False,hbond=False):
     """
     Add polar hydrogens to the structure using CHARMM for a UHBD calculation.
     """
@@ -201,11 +201,12 @@ def pdbAddH(pdb,pdb_id,uhbd_style=False,his_types=None,calc_type="single",
     # Residues to alter and skip during processing
     if calc_type == "single":
         pdb2charmm_resid = {"LYS ":"LYSN","ARG ":"ARGN","GLU ":"GLUH",
-                            "ASP ":"ASPH","LYSH":"LYSN"}
+                            "ASP ":"ASPH","LYSH":"LYSN","LSN ":"LYSN"}
         charmm2pdb_resid = {"LYSN":"LYS ","ARGN":"ARG ","GLUH":"GLU ",
                             "ASPH":"ASP ","HIS ":"HISA","HSD ":"HISB"}
     elif calc_type == "full":
-        pdb2charmm_resid = {"GLU ":"GLUH","ASP ":"ASPH","LYSH":"LYS "}
+        pdb2charmm_resid = {"GLU ":"GLUH","ASP ":"ASPH","LYSH":"LYS ",
+                            "LSN ":"LYS "}
         charmm2pdb_resid = {"GLUH":"GLU ","ASPH":"ASP ","HIS ":"HISA",
                             "HSD ":"HISB","HSC ":"HISA"}
     else:
@@ -270,7 +271,7 @@ def pdbAddH(pdb,pdb_id,uhbd_style=False,his_types=None,calc_type="single",
     # User CHARMM to add hydrogens
     try:
         out_pdb = charmm.interface.charmmWash(structure_list,calc_type,
-                                              keep_temp)
+                                              keep_temp,hbond)
     except charmm.interface.CharmmInterfaceError, (strerr):
         err = "Error in charmm!\n" 
         err += "%s\n" % strerr
@@ -335,6 +336,13 @@ def main():
                       action="store_true",
                       default=False,
                       help="Add hydrogens for UHBD full calculation")
+    cmdline.addOption(short_flag="b",
+                      long_flag="hbond",
+                      action="store",
+                      default=None,
+                      help="Write out hbonds to file",
+                      nargs=1,
+                      type=str)
     cmdline.addOption(short_flag="u",
                       long_flag="uhbd_style",
                       action="store_true",
@@ -370,12 +378,11 @@ def main():
     # Decide whether to keep temp files and how to format output
     keep_temp = options.keep_temp
     uhbd_style = options.uhbd_style
+    hbond = options.hbond
 
     # Decide whether to add "full" hydrogens.
     if options.full:
         calc_type = "full"
-        #err = "Full hydrogen addition not yet implemented!"
-        #cmdline.parser.error(err)
     else:
         calc_type = "single"
 
@@ -397,7 +404,8 @@ def main():
             pdb_out = pdbAddH(pdb,pdb_id,uhbd_style=uhbd_style,
                               his_types=his_types,
                               keep_temp=keep_temp,
-                              calc_type=calc_type)
+                              calc_type=calc_type,
+                              hbond=hbond)
         except PdbAddHError, (strerror):
             err = "Addition of hydrogens failed for %s\n" % file
             err += "Problem was with CHARMM\n.%s" % strerror

@@ -70,7 +70,7 @@ class Chain:
     Hold a single molecule chain (as a set of fragments).
     """
     
-    def __init__(self,chain_id,atom_lines,seq_lines):
+    def __init__(self,chain_id,atom_lines,seq_lines,frag_dist_cutoff=5.0):
         """
         Hold set of fragments that represents the chain of atoms held in
         atom_lines.
@@ -88,7 +88,7 @@ class Chain:
         else:
             self.n_terminus = False
             self.c_terminus = False
-        self.findFragments()        
+        self.findFragments(frag_dist_cutoff)        
         
         num_breaks = len(self.frag_index)
         # If there is no break in the chain, create a single fragment
@@ -145,7 +145,7 @@ class Chain:
         if struct_seq[num_compare:] == gene_seq[num_compare:]:
             self.c_terminus = True
 
-    def findFragments(self,dist_cutoff=4.0):
+    def findFragments(self,dist_cutoff=5.0):
         """
         Take lines of pdb in self.atom_lines and find breaks in chain.
         """
@@ -223,7 +223,7 @@ class Structure:
     Class to hold a pdb file (broken into chains, then into fragments).
     """
     
-    def __init__(self,pdb_id,seq_lines,atom_lines):
+    def __init__(self,pdb_id,seq_lines,atom_lines,frag_dist_cutoff=5.0):
         """
         Read pdb file and find chains in the pdb file.
         """
@@ -234,7 +234,7 @@ class Structure:
   
         # Create self.chains (list containing Chain objects for each chain in
         # the pdb file).
-        self.findChains()
+        self.findChains(frag_dist_cutoff)
         
         # Create dictionaries to convert between raw numbering scheme and
         # fixed numbering scheme
@@ -251,7 +251,7 @@ class Structure:
         self.current_numbering = "raw"
 
    
-    def findChains(self):
+    def findChains(self,frag_dist_cutoff=5.0):
         """
         Find the indiviual chains in a pdb file given all atom entries in the
         file.
@@ -284,7 +284,8 @@ class Structure:
         self.chains = []
         for chain_id in self.chain_list:
             self.chains.append(Chain(chain_id,self.chain_atoms[chain_id],
-                                     self.chain_seq[chain_id]))
+                                     self.chain_seq[chain_id],
+                                     frag_dist_cutoff))
 
     def renumberAtoms(self):
         """

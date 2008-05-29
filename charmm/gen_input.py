@@ -22,9 +22,11 @@ SINGLE_RTF = ["MASSES.RTF","AMINO.RTF"]
 SINGLE_PRM =["PARM.PRM"]
 FULL_RTF = ["MASSES_TITRA.RTF","AMINO_TITRA.RTF"]
 FULL_PRM =["PARM_TITRA.PRM"]
-FULL_MINIMIZATION_CONSTANTS ={"NPRI":50,"TOLG":0.001,"STEP":0.005,"TOLS":0.0,
-                              "TOLENR":0.0,"INBFRQ":50,"CUTNB":20.0,
-                              "CTOFNB":18.0,"CTONNB":15.0,"EPS":4.0}
+FULL_MINIMIZATION_CONSTANTS = {"NPRI":50,"TOLG":0.001,"STEP":0.005,"TOLS":0.0,
+                               "TOLENR":0.0,"INBFRQ":50,"CUTNB":20.0,
+                               "CTOFNB":18.0,"CTONNB":15.0,"EPS":4.0}
+WRITE_HBONDS_CONSTANTS = {"CTONHB":3.5,"CTOFHB":4.0,"CUTHB":4.5,"CTONHA":50.0,
+                          "CTOFHA":70.0,"CUTHA":90.0}
 
 def generateHeader():
     """
@@ -160,6 +162,26 @@ def addHydrogens():
     
     return "".join(out)
 
+def writeHbonds(filename):
+    """
+    Write hbonds to an output file.
+    """
+
+    out = [divider]
+    out.append("! Find and write all hbonds\n")
+
+    m = WRITE_HBONDS_CONSTANTS
+
+    cmd = "hbond acce all ctonhb %.1F ctofhb %.1F cuthb %.1F ctonha %.1F" % \
+          (m["CTONHB"],m["CTOFHB"],m["CUTHB"],m["CTONHA"])
+    cmd = "%s -\nctofha %.1F cutha %.1F\n" % (cmd,m["CTOFHA"],m["CUTHA"])
+    out.append(cmd)
+
+    out.append("open unit 17 form write name %s\n" % filename)
+    out.append("write hbonds card unit 17\n")
+
+    return "".join(out)
+
 
 def minimizeSingle(steps):
     """
@@ -222,7 +244,7 @@ def writeCoord(output_file):
     return "".join(out)
 
 
-def createCharmmFile(pdb_files,calc_type="single",num_steps=500,
+def createCharmmFile(pdb_files,calc_type="single",hbond=None,num_steps=500,
                      coord_out="out.cor"):
     """
     Generate a charmm input file to add hyrogens to structure.
@@ -271,6 +293,10 @@ def createCharmmFile(pdb_files,calc_type="single",num_steps=500,
 
     # Add hydrogens
     out.append(addHydrogens())
+
+    # Write out hbond information
+    if hbond != None:
+        out.append(writeHbonds(hbond))
 
     # Perform minization (single or full)
     out.append(minimize(num_steps))
