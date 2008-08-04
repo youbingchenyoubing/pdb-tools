@@ -111,7 +111,7 @@ def pdbParam(pdb,chain="all",use_atoms=False):
             aa_list.extend(chain_dict[c])
     else:
         if chain in chain_dict.keys():
-            aa_list = chain_dict[c].values()
+            aa_list = chain_dict[chain]
         else:
             err = "Chain \"%s\" is not in pdb file!" % chain
             raise PdbParamError(err)
