@@ -13,8 +13,7 @@ Standardizes a Brookhaven pdb file
 __author__ = "Michael J. Harms"
 __date__ = "070727"
 
-
-import sys, time, string, os
+import sys, time, string, os, shutil
 import pdb_atom_renumber, charmm.interface
 from helper import container
 from pdb_data.common import *
@@ -182,7 +181,8 @@ def backboneCheck(coord):
     return coord, removed
 
 
-def addMissingAtoms(coord,seqres,keep_temp=False):
+def addMissingAtoms(coord,seqres,keep_temp=False,renumber_residues=False,
+                    pdb_id=""):
     
     # Grab the b-factor and occupancy columns
     bfact_occ = dict([(l[13:26],l[54:67]) for l in coord])
@@ -206,10 +206,14 @@ def addMissingAtoms(coord,seqres,keep_temp=False):
     
     # Place charmm coordinates into new pdb container, and load in old numbering
     new_pdb = container.Structure("tmp",[],new_coord)
-    new_pdb.loadNumberConversion("numbering_conversion.txt","fixed")
-    new_pdb.renumberAtoms()
-    os.remove("numbering_conversion.txt")
-    
+    if renumber_residues:
+        shutil.move("numbering_conversion.txt",
+                    "%s_resid-conversion.txt" % pdb_id)
+    else:
+        new_pdb.loadNumberConversion("numbering_conversion.txt","fixed")
+        new_pdb.renumberAtoms()
+        os.remove("numbering_conversion.txt")
+   
     # Add bfactors, occupancies, and TER entries back in
     out = []
     for chain in new_pdb.chains:
@@ -304,13 +308,18 @@ def pdbClean(pdb,pdb_id="temp",chains="all",renumber_residues=False,
     if pdbCheck(coord):
         err = "Backbone checker removed all atoms!  Mangled pdb file."
         raise PdbCleanError(err)
-
+    
     # Add missing atoms using CHARMM
     print log_fmt % "Adding heavy atoms using CHARMM.",
     seqres = [l for l in header if l[0:6] == "SEQRES"]
-    coord = addMissingAtoms(coord,seqres,keep_temp)
+    coord = addMissingAtoms(coord,seqres,keep_temp,renumber_residues,pdb_id)
     log.append(log_fmt % "Missing heavy atoms were added with CHARMM.")
     
+    # Renumber residues if requested
+    if renumber_residues:
+        log.append(log_fmt % "Residues renumbered from one.")
+        print log[-1],
+        
     # Renumber atoms from 1
     coord = pdb_atom_renumber.pdbAtomRenumber(coord)
     log.append(log_fmt % "Renumbered atoms from 1")
@@ -321,16 +330,6 @@ def pdbClean(pdb,pdb_id="temp",chains="all",renumber_residues=False,
     log.append(log_fmt % "Atom types were standardized.")
     print log[-1],
     
-    if renumber_residues:
-        log.append(log_fmt % "Residues renumbered from one.")
-        print log[-1],
-        
-        pdb_object = container.Structure("tmp",seqres,coord)
-        pdb_object.dumpNumberConversion("%s_resid-conversion.txt" % pdb_id)
-        pdb_object.renumberAtoms()
-        
-        coord = pdb_object.atom_lines
-
     # Final check
     if pdbCheck(coord):
         err = "Unknown error occured and pdb has been mangled!"
@@ -344,9 +343,8 @@ def pdbClean(pdb,pdb_id="temp",chains="all",renumber_residues=False,
 
     # Return processed pdb file, placing log after preliminary remarks.
     out_pdb = []
-    out_pdb.extend(header[0:remark_pos])
+    out_pdb.extend(header)
     out_pdb.extend(log)
-    out_pdb.extend(header[remark_pos:])
     out_pdb.extend(coord)
 
     return out_pdb
