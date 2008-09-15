@@ -14,7 +14,7 @@ NACCESS.
 __author__ = "Michael J. Harms"
 __date__ = "080129"
 
-import os, sys, copy
+import os, sys, copy, shutil
 
 global standards
 
@@ -30,6 +30,21 @@ def runNaccess(pdb_file,probe=1.4,z_sample=0.05,vdw_file=None,keep_temp=False):
     Wrapper to run naccess.
     """
 
+    curr_dir = os.getcwd()
+    tmp_dir = "%s_sasa-tmp" % pdb_file[:-4]
+
+    try:
+        os.mkdir(tmp_dir)
+    except OSError, (errno,errstr):
+        if errno == 17:
+            pass
+        else:
+            err = "Problem creating temporary directory (%s)" % tmp_dir
+            raise PdbSasaError(err)
+
+    shutil.copy(pdb_file,tmp_dir)
+    os.chdir(tmp_dir)
+    
     # Actually run naccess
     args = ['naccess',pdb_file,"-p","%.2F" % probe,"-z","%.2F" % z_sample]
     if vdw_file != None:
@@ -50,16 +65,11 @@ def runNaccess(pdb_file,probe=1.4,z_sample=0.05,vdw_file=None,keep_temp=False):
     # Grab residue/atom names and calculated accessibility
     out = ["%s %s\n" % (l[13:26],l[54:62]) for l in lines if l[0:4] == "ATOM"]
 
+    os.chdir("..")
+
     # Remove temporary files
     if not keep_temp:
-        to_remove = ["%s.rsa","%s.asa","%s.log"]
-        to_remove = [s % root for s in to_remove]
-
-        for f in to_remove:
-            try:
-                os.remove(f)
-            except OSError:
-                pass
+        shutil.rmtree(tmp_dir)
 
     return out
 
