@@ -10,7 +10,7 @@ Some scripts require installation of third-party programs.  These should be inst
 
 Almost all programs in the pdbTools suite have the same usage:
 
-pdb_XXXX.py pdb_input \[optional_args\] > output
+pdb_XXXX.py pdb_input optional_args > output
 
 *pdb_input* can be one of the following (in any arbitrary combination):
   * pdb files
