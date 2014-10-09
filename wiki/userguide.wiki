@@ -1,3 +1,11 @@
+=NOTE=
+
+----
+
+*The pdbtools suite is now hosted on github: [https://github.com/harmslab/pdbtools].  The documentation below, as well as sources, are still here for historical reasons.  -- Mike Harms, 2014-10-08*
+
+----
+
 #summary pdb-tools User Guide
 
 = Usage =
